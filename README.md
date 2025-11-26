@@ -232,13 +232,42 @@ git clone [https://github.com/Lmaberd/CVDL-Live-Drowsiness-Detection.git](https:
 - `q`: Quit the application.
 
 - `f`: Toggle fullscreen mode.
-
+---
 ## Future Improvements
 - **Gaze Tracking:** YOLO detects eyes, but not gaze direction. Adding iris tracking could detect distraction.
 
 - **Head Pose Estimation:** Detecting head nodding/drooping via Perspective-n-Point algorithms.
 
 - **Edge Optimisation:** Exporting models to ONNX or TensorRT for faster inference.
+---
+## FAQ
 
+### **What is the `face` class used for?**
+The `face` tag represents the driver’s head/face region. It is used for:
+- **Driver presence detection:** If no face is detected, the frame is considered unreliable (driver missing or camera misaligned).
+- **Spatial anchoring:** Eye-related detections must fall inside the face box, preventing false positives in the background.
+- **Feature input for the Fusion MLP:** Face confidence and presence are used as part of the feature vector, improving overall stability of the drowsiness prediction.
+
+---
+
+### **What does the `uncertain` class mean?**
+`uncertain` is a special class used **exclusively for sunglasses**.
+
+Whenever the driver is wearing sunglasses, the detector cannot reliably classify eyes as open or closed. Instead of incorrectly forcing them into `eyes_open` or `eyes_close`, these regions are labeled as **uncertain**.
+
+This serves two purposes:
+- **Detection reliability:** The system knows that eye state signals cannot be trusted during sunglasses.
+- **Runtime handling:** The real-time HUD triggers a “Please remove your sunglasses” message when `uncertain` appears consistently.
+
+---
+
+### **Why not classify sunglasses as closed eyes?**
+Because this would:
+- artificially inflate PERCLOS (making the driver look falsely drowsy),
+- break the Fusion MLP’s feature logic,
+- and cause incorrect or excessive drowsiness alerts.
+
+
+---
 ## Acknowledgements
 Built for a Computer Vision & Deep Learning module. Powered by **YOLOv8 (Ultralytics), PyTorch, Optuna, OpenCV, and Pillow**.
